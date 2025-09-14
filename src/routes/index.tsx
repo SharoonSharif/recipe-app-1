@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useSession, useUser, useDescope } from '@descope/react-sdk'
 import { useQuery, useMutation } from 'convex/react'
-import { api } from '../../convex/_generated/api'
+import { api } from '../../convex/_generated/api.js'
 import { LoginPage } from '../components/LoginPage'
 import { RecipeForm } from '../components/RecipeForm'
 import { RecipeCard } from '../components/RecipeCard'

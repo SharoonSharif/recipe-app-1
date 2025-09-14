@@ -6,7 +6,7 @@ import { Input } from './ui/input'
 import { Label } from './ui/label'
 import { Textarea } from './ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import { Card, } from './ui/card'
+import { Card } from './ui/card'
 import { Trash2, Plus } from 'lucide-react'
 
 interface RecipeFormProps {
@@ -23,235 +23,211 @@ const COMMON_UNITS = [
   // Pieces
   'piece', 'slice', 'whole', 'clove', 'bunch', 'head', 'can', 'jar', 'package',
   // Other
-  'dash', 'pinch', 'to taste'
+  'dash', 'pinch', 'to taste',
+] as const
+
+// Adjust these to match whatever your backend/type allows.
+// If RecipeFormData['category'] is a union, ensure the strings below are in that union.
+const CATEGORIES: string[] = [
+  'Breakfast',
+  'Lunch',
+  'Dinner',
+  'Snack',
+  'Dessert',
+  'Drink',
+  'Other',
 ]
 
 export function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps) {
-  const [formData, setFormData] = useState({
-    name: recipe?.name || '',
-    ingredients: recipe?.ingredients || [{ quantity: 1, unit: 'cup', ingredient: '', notes: '' }] as StructuredIngredient[],
-    instructions: recipe?.instructions || '',
-    prepTime: recipe?.prepTime || 30,
-    category: recipe?.category || 'main course',
+  const [formData, setFormData] = useState<RecipeFormData>({
+    name: recipe?.name ?? '',
+    category: (recipe?.category as RecipeFormData['category']) ?? ('Other' as RecipeFormData['category']),
+    ingredients:
+      (recipe?.ingredients as StructuredIngredient[] | undefined) ??
+      ([{ quantity: 1, unit: 'cup', ingredient: '', notes: '' }] as StructuredIngredient[]),
+    instructions: recipe?.instructions ?? '',
+    prepTime: recipe?.prepTime ?? 30,
   })
+
+  const updateIngredient = (index: number, patch: Partial<StructuredIngredient>) => {
+    setFormData(prev => {
+      const next = [...prev.ingredients]
+      next[index] = { ...next[index], ...patch }
+      return { ...prev, ingredients: next }
+    })
+  }
 
   const addIngredient = () => {
     setFormData(prev => ({
       ...prev,
-      ingredients: [...prev.ingredients, { quantity: 1, unit: 'cup', ingredient: '', notes: '' }]
+      ingredients: [
+        ...prev.ingredients,
+        { quantity: 1, unit: 'cup', ingredient: '', notes: '' } as StructuredIngredient,
+      ],
     }))
   }
 
   const removeIngredient = (index: number) => {
-    if (formData.ingredients.length > 1) {
-      setFormData(prev => ({
-        ...prev,
-        ingredients: prev.ingredients.filter((_, i) => i !== index)
-      }))
-    }
-  }
-
-  const updateIngredient = (index: number, field: keyof StructuredIngredient, value: string | number) => {
     setFormData(prev => ({
       ...prev,
-      ingredients: prev.ingredients.map((ingredient, i) => 
-        i === index ? { ...ingredient, [field]: value } : ingredient
-      )
+      ingredients: prev.ingredients.filter((_, i) => i !== index),
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Validate ingredients
-    const validIngredients = formData.ingredients.filter(ing => 
-      ing.ingredient.trim() !== '' && ing.quantity > 0
-    )
-    
-    if (validIngredients.length === 0) {
-      alert('Please add at least one ingredient')
-      return
-    }
-
-    onSave({
-      ...formData,
-      ingredients: validIngredients
-    })
+  const handleSubmit = () => {
+    // Basic validation
+    if (!formData.name.trim()) return
+    if (!formData.category || !String(formData.category).trim()) return
+    const hasAtLeastOneItem = formData.ingredients.some(i => (i.ingredient ?? '').trim())
+    if (!hasAtLeastOneItem) return
+    onSave(formData)
   }
 
   return (
-    <Dialog open={true} onOpenChange={onCancel}>
-      <DialogContent className="max-w-6xl h-[90vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0 pb-4 border-b">
-          <DialogTitle className="text-2xl font-semibold">
-            {recipe ? 'Edit Recipe' : 'Create New Recipe'}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="flex-1 overflow-y-auto py-4">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            
-            {/* Basic Info Section */}
-            <div className="space-y-6">
-              <div>
-                <Label htmlFor="name" className="text-base font-medium">Recipe Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter recipe name..."
-                  className="mt-2 text-base"
-                  required
-                />
-              </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onCancel() }}>
+      <DialogContent className="sm:max-w-2xl flex max-h-[85vh]">
+        <div className="flex-1 overflow-y-auto pr-2">
+          <DialogHeader>
+            <DialogTitle>{recipe ? 'Edit Recipe' : 'New Recipe'}</DialogTitle>
+          </DialogHeader>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="category" className="text-base font-medium">Category</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="appetizer">Appetizer</SelectItem>
-                      <SelectItem value="main course">Main Course</SelectItem>
-                      <SelectItem value="side dish">Side Dish</SelectItem>
-                      <SelectItem value="dessert">Dessert</SelectItem>
-                      <SelectItem value="beverage">Beverage</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="prepTime" className="text-base font-medium">Prep Time (minutes)</Label>
-                  <Input
-                    id="prepTime"
-                    type="number"
-                    value={formData.prepTime}
-                    onChange={(e) => setFormData(prev => ({ ...prev, prepTime: parseInt(e.target.value) || 0 }))}
-                    min="0"
-                    className="mt-2"
-                    required
-                  />
-                </div>
-              </div>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              handleSubmit()
+            }}
+            className="space-y-6"
+          >
+            {/* Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name">Recipe name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g., Creamy Tomato Pasta"
+                required
+              />
             </div>
 
-            {/* Ingredients Section */}
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <Label className="text-base font-medium">
-                  Ingredients ({formData.ingredients.length})
-                </Label>
-                <Button
-                  type="button"
-                  onClick={addIngredient}
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Ingredient
-                </Button>
-              </div>
+            {/* Category */}
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select
+                value={String(formData.category)}
+                onValueChange={(val) =>
+                  setFormData(prev => ({ ...prev, category: val as RecipeFormData['category'] }))
+                }
+              >
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map(c => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-4">
-                {formData.ingredients.map((ingredient, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="grid grid-cols-12 gap-4 items-start">
-                      {/* Quantity */}
-                      <div className="col-span-2">
-                        <Label htmlFor={`quantity-${index}`} className="text-sm font-medium text-gray-700">
-                          Qty
-                        </Label>
-                        <Input
-                          id={`quantity-${index}`}
-                          type="number"
-                          step="0.25"
-                          min="0"
-                          value={ingredient.quantity}
-                          onChange={(e) => updateIngredient(index, 'quantity', parseFloat(e.target.value) || 0)}
-                          className="mt-1"
-                        />
-                      </div>
+            {/* Prep Time */}
+            <div className="space-y-2">
+              <Label htmlFor="prepTime">Prep time (minutes)</Label>
+              <Input
+                id="prepTime"
+                type="number"
+                min={0}
+                step="1"
+                value={formData.prepTime ?? 0}
+                onChange={(e) =>
+                  setFormData(prev => ({ ...prev, prepTime: Number(e.target.value || 0) }))
+                }
+                required
+              />
+            </div>
 
-                      {/* Unit */}
-                      <div className="col-span-2">
-                        <Label htmlFor={`unit-${index}`} className="text-sm font-medium text-gray-700">
-                          Unit
-                        </Label>
-                        <Select
-                          value={ingredient.unit}
-                          onValueChange={(value) => updateIngredient(index, 'unit', value)}
-                        >
-                          <SelectTrigger className="mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COMMON_UNITS.map(unit => (
-                              <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {/* Ingredient Name */}
-                      <div className="col-span-5">
-                        <Label htmlFor={`ingredient-${index}`} className="text-sm font-medium text-gray-700">
-                          Ingredient
-                        </Label>
-                        <Input
-                          id={`ingredient-${index}`}
-                          type="text"
-                          value={ingredient.ingredient}
-                          onChange={(e) => updateIngredient(index, 'ingredient', e.target.value)}
-                          placeholder="e.g., all-purpose flour"
-                          className="mt-1"
-                        />
-                      </div>
-
-                      {/* Notes */}
-                      <div className="col-span-2">
-                        <Label htmlFor={`notes-${index}`} className="text-sm font-medium text-gray-700">
-                          Notes
-                        </Label>
-                        <Input
-                          id={`notes-${index}`}
-                          type="text"
-                          value={ingredient.notes || ''}
-                          onChange={(e) => updateIngredient(index, 'notes', e.target.value)}
-                          placeholder="optional"
-                          className="mt-1"
-                        />
-                      </div>
-
-                      {/* Delete Button */}
-                      <div className="col-span-1 flex justify-end pt-6">
-                        {formData.ingredients.length > 1 && (
-                          <Button
-                            type="button"
-                            onClick={() => removeIngredient(index)}
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
+            {/* Ingredients */}
+            <div className="space-y-3">
+              <Label>Ingredients</Label>
+              <Card className="p-4 space-y-3">
+                {formData.ingredients.map((ing, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-end">
+                    <div className="col-span-3">
+                      <Label className="text-xs">Quantity</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        step="any"
+                        value={ing.quantity ?? 0}
+                        onChange={(e) => updateIngredient(idx, { quantity: Number(e.target.value || 0) })}
+                      />
                     </div>
-                  </Card>
+
+                    <div className="col-span-3">
+                      <Label className="text-xs">Unit</Label>
+                      <Select
+                        value={ing.unit ?? ''}
+                        onValueChange={(val) => updateIngredient(idx, { unit: val })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COMMON_UNITS.map(u => (
+                            <SelectItem key={u} value={u}>
+                              {u}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="col-span-5">
+                      <Label className="text-xs">Ingredient</Label>
+                      <Input
+                        value={ing.ingredient ?? ''}
+                        onChange={(e) => updateIngredient(idx, { ingredient: e.target.value })}
+                        placeholder="e.g., diced tomatoes"
+                      />
+                    </div>
+
+                    <div className="col-span-12">
+                      <Label className="text-xs">Notes (optional)</Label>
+                      <Input
+                        value={ing.notes ?? ''}
+                        onChange={(e) => updateIngredient(idx, { notes: e.target.value })}
+                        placeholder="e.g., canned, no salt added"
+                      />
+                    </div>
+
+                    <div className="col-span-12 flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => removeIngredient(idx)}
+                        className="h-8 px-2"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+
+                    <div className="col-span-12 border-b" />
+                  </div>
                 ))}
-              </div>
+
+                <Button type="button" variant="outline" onClick={addIngredient} className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add ingredient
+                </Button>
+              </Card>
             </div>
 
-            {/* Instructions Section */}
-            <div className="pb-4">
-              <Label htmlFor="instructions" className="text-base font-medium">Instructions</Label>
+            {/* Instructions */}
+            <div className="space-y-2">
+              <Label htmlFor="instructions">Instructions</Label>
               <Textarea
                 id="instructions"
                 value={formData.instructions}
@@ -266,11 +242,11 @@ export function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps) {
         </div>
 
         {/* Fixed Action Buttons */}
-        <div className="flex-shrink-0 flex gap-4 pt-4 border-t bg-white">
-          <Button type="button" onClick={onCancel} variant="outline" className="flex-1">
+        <div className="flex-shrink-0 flex flex-col gap-4 pt-4 border-t sm:border-t-0 sm:border-l bg-white sm:pl-4 min-w-[200px]">
+          <Button type="button" onClick={onCancel} variant="outline">
             Cancel
           </Button>
-          <Button type="submit" onClick={handleSubmit} className="flex-1">
+          <Button type="submit" onClick={handleSubmit}>
             {recipe ? 'Update Recipe' : 'Save Recipe'}
           </Button>
         </div>

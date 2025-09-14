@@ -1,34 +1,74 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// Temporary debug version - returns empty array if auth fails
+export const getByUser = query({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      console.log('=== getByUser called ===');
+      const identity = await ctx.auth.getUserIdentity();
+      console.log('Identity:', identity);
+      
+      if (!identity) {
+        console.log('No identity - returning empty array');
+        return [];
+      }
+      
+      const userId = identity.subject;
+      console.log('User ID:', userId);
+      
+      const recipes = await ctx.db
+        .query("recipes")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .collect();
+      
+      console.log('Found recipes:', recipes.length);
+      
+      return recipes.map(recipe => ({
+        ...recipe,
+        isFavorite: recipe.isFavorite ?? false,
+      }));
+    } catch (error) {
+      console.error('Error in getByUser:', error);
+      // Return empty array instead of throwing
+      return [];
+    }
+  },
+});
+
+// Keep all other functions the same but add error handling
+export const getShoppingLists = query({
+  args: {},
+  handler: async (ctx) => {
+    try {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        return [];
+      }
+      const userId = identity.subject;
+      return await ctx.db
+        .query("shoppingLists")
+        .withIndex("by_user", (q) => q.eq("userId", userId))
+        .order("desc")
+        .collect();
+    } catch (error) {
+      console.error('Error in getShoppingLists:', error);
+      return [];
+    }
+  },
+});
+
 // Helper to get user ID from auth
 async function getUserId(ctx: any) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
     throw new Error("Not authenticated");
   }
-  // Use the subject (sub) claim from the JWT as the user ID
   return identity.subject;
 }
 
-// Get all recipes for the authenticated user
-export const getByUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getUserId(ctx);
-    const recipes = await ctx.db
-      .query("recipes")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
-    
-    return recipes.map(recipe => ({
-      ...recipe,
-      isFavorite: recipe.isFavorite ?? false,
-    }));
-  },
-});
-
-// Create a new recipe for the authenticated user
+// Rest of the mutations (create, update, etc.) - keeping them as is for now
 export const create = mutation({
   args: {
     name: v.string(),
@@ -56,7 +96,6 @@ export const create = mutation({
   },
 });
 
-// Update recipe (with ownership check)
 export const update = mutation({
   args: {
     id: v.id("recipes"),
@@ -87,7 +126,6 @@ export const update = mutation({
   },
 });
 
-// Toggle favorite (with ownership check)
 export const toggleFavorite = mutation({
   args: { id: v.id("recipes") },
   handler: async (ctx, args) => {
@@ -107,7 +145,6 @@ export const toggleFavorite = mutation({
   },
 });
 
-// Delete recipe (with ownership check)
 export const remove = mutation({
   args: { id: v.id("recipes") },
   handler: async (ctx, args) => {
@@ -122,7 +159,6 @@ export const remove = mutation({
   },
 });
 
-// Create shopping list
 export const createShoppingList = mutation({
   args: {
     name: v.string(),
@@ -131,7 +167,6 @@ export const createShoppingList = mutation({
   handler: async (ctx, args) => {
     const userId = await getUserId(ctx);
     
-    // Verify user owns all recipes
     const recipes = await Promise.all(
       args.recipeIds.map(id => ctx.db.get(id))
     );
@@ -141,7 +176,6 @@ export const createShoppingList = mutation({
       throw new Error("Some recipes not found or unauthorized");
     }
     
-    // Combine ingredients intelligently
     const combinedIngredients = new Map();
     
     recipes.forEach(recipe => {
@@ -179,20 +213,6 @@ export const createShoppingList = mutation({
   },
 });
 
-// Get shopping lists for authenticated user
-export const getShoppingLists = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getUserId(ctx);
-    return await ctx.db
-      .query("shoppingLists")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
-      .order("desc")
-      .collect();
-  },
-});
-
-// Delete shopping list (with ownership check)
 export const deleteShoppingList = mutation({
   args: { id: v.id("shoppingLists") },
   handler: async (ctx, args) => {

@@ -3,6 +3,7 @@ import { useSession, useUser, useDescope } from '@descope/react-sdk'
 import { useQuery } from 'convex/react'
 import { api } from '../../convex/_generated/api.js'
 import { LoginPage } from '../components/LoginPage'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
@@ -12,12 +13,20 @@ function HomePage() {
   const { isAuthenticated, isSessionLoading } = useSession()
   const { user, isUserLoading } = useUser()
   const { logout } = useDescope()
+  const navigate = Route.useNavigate()
+  const search = Route.useSearch<{ next?: string }>()
   
   // Simple test query
   const userId = (user as any)?.sub || (user as any)?.id || user?.email
-  const recipes = useQuery(api.recipes.getByUser, 
+  const recipes = useQuery(api.recipes.getByUser,
     isAuthenticated && userId ? { userId: userId } : "skip"
   )
+
+  useEffect(() => {
+    if (isAuthenticated && search.next) {
+      navigate({ to: search.next })
+    }
+  }, [isAuthenticated, search.next, navigate])
 
   if (isSessionLoading || isUserLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>

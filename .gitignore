@@ -48,3 +48,5 @@ pids
 
 # Convex generated files
 convex/_generated/
+
+src/convex/_generated/

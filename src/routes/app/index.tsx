@@ -4,6 +4,7 @@ import { useSession, useUser, useDescope } from '@descope/react-sdk'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Recipe, RecipeFormData, ShoppingList } from '../../types/recipe'
+import { Id } from '../../../convex/_generated/dataModel'
 
 // Import all your components
 import { RecipeCard } from '../../components/RecipeCard'
@@ -26,6 +27,10 @@ function AppHome() {
   const { isAuthenticated, isSessionLoading } = useSession()
   const { user, isUserLoading } = useUser()
   const { logout } = useDescope()
+
+  const handleLogout = async () => {
+    await logout()
+  }
 
   // State management
   const [searchTerm, setSearchTerm] = useState('')
@@ -104,7 +109,7 @@ function AppHome() {
     }
   }
 
-  const handleDeleteRecipe = async (id: string) => {
+  const handleDeleteRecipe = async (id: Id<'recipes'>) => {
     try {
       await deleteRecipe({ id })
     } catch (error) {
@@ -113,7 +118,7 @@ function AppHome() {
     }
   }
 
-  const handleToggleFavorite = async (id: string) => {
+  const handleToggleFavorite = async (id: Id<'recipes'>) => {
     try {
       await toggleFavorite({ id })
     } catch (error) {
@@ -122,7 +127,7 @@ function AppHome() {
     }
   }
 
-  const handleCreateShoppingList = async (name: string, selectedRecipeIds: string[]) => {
+  const handleCreateShoppingList = async (name: string, selectedRecipeIds: Id<'recipes'>[]) => {
     try {
       await createShoppingList({
         name,
@@ -135,7 +140,7 @@ function AppHome() {
     }
   }
 
-  const handleDeleteShoppingList = async (id: string) => {
+  const handleDeleteShoppingList = async (id: Id<'shoppingLists'>) => {
     try {
       await deleteShoppingList({ id })
       setViewingShoppingList(null)

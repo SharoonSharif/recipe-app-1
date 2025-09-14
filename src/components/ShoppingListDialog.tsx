@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Recipe, StructuredIngredient } from '../types/recipe'
+import { Id } from '../../convex/_generated/dataModel'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -10,17 +11,17 @@ import { Badge } from './ui/badge'
 
 interface ShoppingListDialogProps {
   recipes: Recipe[]
-  onCreateList: (name: string, selectedRecipeIds: string[]) => void
+  onCreateList: (name: string, selectedRecipeIds: Id<'recipes'>[]) => void
   onClose: () => void
 }
 
 export function ShoppingListDialog({ recipes, onCreateList, onClose }: ShoppingListDialogProps) {
   const [listName, setListName] = useState(`Shopping List - ${new Date().toLocaleDateString()}`)
-  const [selectedRecipes, setSelectedRecipes] = useState<string[]>([])
+  const [selectedRecipes, setSelectedRecipes] = useState<Id<'recipes'>[]>([])
 
-  const toggleRecipe = (recipeId: string) => {
-    setSelectedRecipes(prev => 
-      prev.includes(recipeId) 
+  const toggleRecipe = (recipeId: Id<'recipes'>) => {
+    setSelectedRecipes(prev =>
+      prev.includes(recipeId)
         ? prev.filter(id => id !== recipeId)
         : [...prev, recipeId]
     )

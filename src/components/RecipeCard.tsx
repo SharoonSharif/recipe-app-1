@@ -1,4 +1,5 @@
 import { Recipe } from '../types/recipe'
+import { Id } from '../../convex/_generated/dataModel'
 import { Card, CardContent, CardHeader, CardFooter } from './ui/card'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -7,8 +8,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 interface RecipeCardProps {
   recipe: Recipe
   onEdit: (recipe: Recipe) => void
-  onDelete: (id: string) => void
-  onToggleFavorite: (id: string) => void
+  onDelete: (id: Id<'recipes'>) => void
+  onToggleFavorite: (id: Id<'recipes'>) => void
   onScale: (recipe: Recipe) => void
 }
 

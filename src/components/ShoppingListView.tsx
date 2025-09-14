@@ -1,4 +1,5 @@
 import { ShoppingList, Recipe, StructuredIngredient } from '../types/recipe'
+import { Id } from '../../convex/_generated/dataModel'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
@@ -10,7 +11,7 @@ interface ShoppingListViewProps {
   shoppingList: ShoppingList
   recipes: Recipe[]
   onClose: () => void
-  onDelete: (id: string) => void
+  onDelete: (id: Id<'shoppingLists'>) => void
 }
 
 export function ShoppingListView({ shoppingList, recipes, onClose, onDelete }: ShoppingListViewProps) {

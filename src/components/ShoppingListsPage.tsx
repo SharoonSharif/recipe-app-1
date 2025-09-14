@@ -1,4 +1,5 @@
 import { ShoppingList, Recipe } from '../types/recipe'
+import { Id } from '../../convex/_generated/dataModel'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
@@ -7,7 +8,7 @@ interface ShoppingListsPageProps {
   shoppingLists: ShoppingList[]
   recipes: Recipe[]
   onViewList: (list: ShoppingList) => void
-  onDeleteList: (id: string) => void
+  onDeleteList: (id: Id<'shoppingLists'>) => void
   onCreateNew: () => void
   onBack: () => void
 }

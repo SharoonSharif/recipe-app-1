@@ -85,63 +85,84 @@ function AppHome() {
   // Get unique categories
   const categories = Array.from(new Set(recipes.map(recipe => recipe.category)))
 
-  // Event handlers
+  // Event handlers with improved error handling
   const handleSaveRecipe = async (recipeData: RecipeFormData) => {
     try {
+      console.log('Attempting to save recipe:', recipeData.name)
+      console.log('Auth status:', { isAuthenticated, user: user?.email })
+      
       if (editingRecipe) {
+        console.log('Updating existing recipe:', editingRecipe._id)
         await updateRecipe({
           id: editingRecipe._id,
           ...recipeData
         })
+        console.log('Recipe updated successfully')
       } else {
-        await createRecipe(recipeData)
+        console.log('Creating new recipe')
+        const result = await createRecipe(recipeData)
+        console.log('Recipe created successfully:', result)
       }
       setShowForm(false)
       setEditingRecipe(null)
     } catch (error) {
       console.error('Error saving recipe:', error)
-      alert('Failed to save recipe. Please try again.')
+      // Show the actual error message with more details
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      alert(`Failed to save recipe: ${errorMessage}\n\nPlease check the browser console and Convex logs for more details.`)
     }
   }
 
   const handleDeleteRecipe = async (id: string) => {
     try {
+      console.log('Deleting recipe:', id)
       await deleteRecipe({ id })
+      console.log('Recipe deleted successfully')
     } catch (error) {
       console.error('Error deleting recipe:', error)
-      alert('Failed to delete recipe. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      alert(`Failed to delete recipe: ${errorMessage}`)
     }
   }
 
   const handleToggleFavorite = async (id: string) => {
     try {
+      console.log('Toggling favorite for recipe:', id)
       await toggleFavorite({ id })
+      console.log('Favorite toggled successfully')
     } catch (error) {
       console.error('Error toggling favorite:', error)
-      alert('Failed to update favorite status. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      alert(`Failed to update favorite status: ${errorMessage}`)
     }
   }
 
   const handleCreateShoppingList = async (name: string, selectedRecipeIds: string[]) => {
     try {
+      console.log('Creating shopping list:', name, 'with recipes:', selectedRecipeIds)
       await createShoppingList({
         name,
         recipeIds: selectedRecipeIds
       })
+      console.log('Shopping list created successfully')
       setShowShoppingDialog(false)
     } catch (error) {
       console.error('Error creating shopping list:', error)
-      alert('Failed to create shopping list. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      alert(`Failed to create shopping list: ${errorMessage}`)
     }
   }
 
   const handleDeleteShoppingList = async (id: string) => {
     try {
+      console.log('Deleting shopping list:', id)
       await deleteShoppingList({ id })
+      console.log('Shopping list deleted successfully')
       setViewingShoppingList(null)
     } catch (error) {
       console.error('Error deleting shopping list:', error)
-      alert('Failed to delete shopping list. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      alert(`Failed to delete shopping list: ${errorMessage}`)
     }
   }
 

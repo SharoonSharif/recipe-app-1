@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "prebuild": "bunx convex codegen",
     "build": "vite build",
     "preview": "vite preview --host --port $PORT",
     "start": "vite preview --host --port $PORT"
   },
+  
   "dependencies": {
     "@descope/react-sdk": "^2.20.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",

@@ -10,13 +10,13 @@ export const Route = createFileRoute('/')({
 function IndexPage() {
   const { isAuthenticated, isSessionLoading } = useSession()
   const navigate = Route.useNavigate()
-  const search = Route.useSearch<{ next?: string }>()
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate({ to: search.next ?? '/app' })
+      // Simple navigation without search parameters
+      navigate({ to: '/app' })
     }
-  }, [isAuthenticated, navigate, search.next])
+  }, [isAuthenticated, navigate])
 
   if (isSessionLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>

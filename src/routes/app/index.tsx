@@ -184,7 +184,7 @@ function AppHome() {
               >
                 🛒 Shopping Lists ({shoppingLists.length})
               </Button>
-              <Button onClick={() => logout()} variant="outline" size="sm">
+              <Button onClick={handleLogout} variant="outline" size="sm">
                 Logout
               </Button>
             </div>

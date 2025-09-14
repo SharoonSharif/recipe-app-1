@@ -78,9 +78,9 @@ export function RecipeForm({ recipe, onSave, onCancel }: RecipeFormProps) {
     // Basic validation
     if (!formData.name.trim()) return
     if (!formData.category || !String(formData.category).trim()) return
-    const hasAtLeastOneItem = formData.ingredients.some(i => (i.ingredient ?? '').trim())
-    if (!hasAtLeastOneItem) return
-    onSave(formData)
+    const cleanedIngredients = formData.ingredients.filter(i => (i.ingredient ?? '').trim())
+    if (cleanedIngredients.length === 0) return
+    onSave({ ...formData, ingredients: cleanedIngredients })
   }
 
   return (

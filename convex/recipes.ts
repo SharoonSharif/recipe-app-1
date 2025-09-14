@@ -68,8 +68,12 @@ export const create = mutation({
       console.log('create - Got userId:', userId);
       
       const now = Date.now();
+      const cleanedIngredients = args.ingredients.filter(
+        (i) => i.ingredient.trim() !== ""
+      );
       const newRecipe = {
         ...args,
+        ingredients: cleanedIngredients,
         userId,
         createdAt: now,
         updatedAt: now,
@@ -114,8 +118,12 @@ export const update = mutation({
       }
       
       const { id, ...updateData } = args;
+      const cleanedIngredients = updateData.ingredients.filter(
+        (i) => i.ingredient.trim() !== ""
+      );
       return await ctx.db.patch(id, {
         ...updateData,
+        ingredients: cleanedIngredients,
         updatedAt: Date.now(),
       });
     } catch (error) {

@@ -1,5 +1,3 @@
-import { Id } from "../../convex/_generated/dataModel"
-
 // NEW: Structured ingredient interface
 export interface StructuredIngredient {
   quantity: number
@@ -9,7 +7,7 @@ export interface StructuredIngredient {
 }
 
 export interface Recipe {
-  _id: Id<"recipes">
+  _id: string
   name: string
   ingredients: StructuredIngredient[] // 👈 CHANGED: Now structured
   instructions: string
@@ -29,9 +27,9 @@ export interface RecipeFormData {
 }
 
 export interface ShoppingList {
-  _id: Id<"shoppingLists">
+  _id: string
   name: string
-  recipeIds: Id<"recipes">[]
+  recipeIds: string[]
   ingredients: StructuredIngredient[] // 👈 CHANGED: Now structured with smart combining
   userId: string
   createdAt: number

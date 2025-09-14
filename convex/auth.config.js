@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: "P32cA9vATRrrgLKiatWoZYfjRNRl.descope.com",
+      domain: "P2nTyWz0FLCIrVuSI9LVzz8zAiMa.descope.com",
       applicationID: "default",
     },
   ]

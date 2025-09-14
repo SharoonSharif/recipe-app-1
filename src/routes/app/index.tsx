@@ -4,7 +4,6 @@ import { useSession, useUser, useDescope } from '@descope/react-sdk'
 import { useQuery, useMutation } from 'convex/react'
 import { api } from '../../../convex/_generated/api'
 import { Recipe, RecipeFormData, ShoppingList } from '../../types/recipe'
-import { Id } from '../../../convex/_generated/dataModel'
 
 // Import all your components
 import { RecipeCard } from '../../components/RecipeCard'
@@ -27,10 +26,6 @@ function AppHome() {
   const { isAuthenticated, isSessionLoading } = useSession()
   const { user, isUserLoading } = useUser()
   const { logout } = useDescope()
-
-  const handleLogout = async () => {
-    await logout()
-  }
 
   // State management
   const [searchTerm, setSearchTerm] = useState('')
@@ -109,7 +104,7 @@ function AppHome() {
     }
   }
 
-  const handleDeleteRecipe = async (id: Id<'recipes'>) => {
+  const handleDeleteRecipe = async (id: string) => {
     try {
       await deleteRecipe({ id })
     } catch (error) {
@@ -118,7 +113,7 @@ function AppHome() {
     }
   }
 
-  const handleToggleFavorite = async (id: Id<'recipes'>) => {
+  const handleToggleFavorite = async (id: string) => {
     try {
       await toggleFavorite({ id })
     } catch (error) {
@@ -127,7 +122,7 @@ function AppHome() {
     }
   }
 
-  const handleCreateShoppingList = async (name: string, selectedRecipeIds: Id<'recipes'>[]) => {
+  const handleCreateShoppingList = async (name: string, selectedRecipeIds: string[]) => {
     try {
       await createShoppingList({
         name,
@@ -140,13 +135,49 @@ function AppHome() {
     }
   }
 
-  const handleDeleteShoppingList = async (id: Id<'shoppingLists'>) => {
+  const handleDeleteShoppingList = async (id: string) => {
     try {
       await deleteShoppingList({ id })
       setViewingShoppingList(null)
     } catch (error) {
       console.error('Error deleting shopping list:', error)
       alert('Failed to delete shopping list. Please try again.')
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      console.log('Logging out...')
+      
+      // Clear Descope session
+      await logout()
+      
+      // Clear any remaining localStorage items
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('DS') || key.startsWith('descope')) {
+          localStorage.removeItem(key)
+        }
+      })
+      
+      // Clear sessionStorage as well
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('DS') || key.startsWith('descope')) {
+          sessionStorage.removeItem(key)
+        }
+      })
+      
+      console.log('Logout complete, redirecting...')
+      
+      // Force a complete page reload to ensure clean state
+      window.location.href = '/'
+      
+    } catch (error) {
+      console.error('Logout error:', error)
+      
+      // Force cleanup and reload even if logout fails
+      localStorage.clear()
+      sessionStorage.clear()
+      window.location.href = '/'
     }
   }
 
@@ -322,7 +353,7 @@ function AppHome() {
               <Card className="max-w-md mx-auto">
                 <CardContent className="p-8">
                   <div className="text-6xl mb-4">🔍</div>
-                  <h3 className="text-xl font-semibial mb-2">No recipes found</h3>
+                  <h3 className="text-xl font-semibold mb-2">No recipes found</h3>
                   <p className="text-muted-foreground mb-6">
                     Try adjusting your search terms or filters.
                   </p>

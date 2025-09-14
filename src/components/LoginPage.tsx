@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Descope, useSession } from '@descope/react-sdk'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 
 export function LoginPage() {
   const { isAuthenticated, isSessionLoading, sessionToken } = useSession()
+  const [componentKey, setComponentKey] = useState(0)
   
   // Add some debug logging
   console.log('LoginPage rendering...')
@@ -12,10 +13,12 @@ export function LoginPage() {
   console.log('sessionToken:', !!sessionToken)
   console.log('Descope Project ID:', import.meta.env.VITE_DESCOPE_PROJECT_ID)
   
-  // Force a re-render after logout
+  // Force component remount when user logs out
   useEffect(() => {
     if (!isAuthenticated && !isSessionLoading) {
-      console.log('User logged out, ensuring clean state')
+      console.log('User logged out, forcing Descope component reset')
+      // Force remount by changing the key
+      setComponentKey(prev => prev + 1)
     }
   }, [isAuthenticated, isSessionLoading])
   
@@ -48,6 +51,7 @@ export function LoginPage() {
               <div className="space-y-4">
                 <div className="min-h-[400px] flex items-center justify-center">
                   <Descope
+                    key={componentKey} // Force remount when key changes
                     flowId="sign-up-or-in"
                     onSuccess={(e) => {
                       console.log('Login successful:', e)
@@ -60,7 +64,7 @@ export function LoginPage() {
                       console.log('Descope component ready')
                     }}
                     theme="light"
-                    debug={true}
+                    debug={false} // Disable debug in production
                   />
                 </div>
               </div>
@@ -70,7 +74,7 @@ export function LoginPage() {
                   ❌ Missing Descope Configuration
                 </p>
                 <p className="text-sm text-red-600 mt-2">
-                  Please check your environment variables in Railway.
+                  Please check your environment variables.
                 </p>
                 <p className="text-xs text-red-500 mt-1">
                   Required: VITE_DESCOPE_PROJECT_ID
@@ -92,6 +96,7 @@ export function LoginPage() {
               <p><strong>Debug Info (dev only):</strong></p>
               <p>• Authenticated: {isAuthenticated ? '✅' : '❌'}</p>
               <p>• Loading: {isSessionLoading ? '✅' : '❌'}</p>
+              <p>• Component Key: {componentKey}</p>
               <p>• Convex URL: {import.meta.env.VITE_CONVEX_URL ? '✅' : '❌'}</p>
               <p>• Descope ID: {import.meta.env.VITE_DESCOPE_PROJECT_ID ? '✅' : '❌'}</p>
             </div>
